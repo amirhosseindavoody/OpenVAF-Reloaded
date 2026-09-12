@@ -23,7 +23,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # SHA256 from https://discourse.llvm.org/t/18-1-8-has-been-tagged/79726
 ARG LLVM_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04.tar.xz
 ARG LLVM_SHA256=54ec30358afcc9fb8aa74307db3046f5187f9fb89fb37064cdde906e062ebf36
-ARG RUST_TOOLCHAIN=1.83.0
+# 1.83 cannot parse clap 4.6 (edition 2024). 1.98.1 is current stable and
+# still runs on Ubuntu 20.04 / glibc 2.31.
+ARG RUST_TOOLCHAIN=1.98.1
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

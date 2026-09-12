@@ -14,7 +14,7 @@ distro `libLLVM` will request symbols such as `GLIBC_2.32`–`GLIBC_2.38`.
 | --- | --- | --- |
 | Container base | `ubuntu:20.04` (Focal) | Distro glibc **2.31** — same ceiling as SLES 15. |
 | LLVM | Official `clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04.tar.xz` | Built on Ubuntu 18.04 (glibc 2.27). SHA256 `54ec30358afcc9fb8aa74307db3046f5187f9fb89fb37064cdde906e062ebf36`. Matches the repo's `llvm18` Cargo feature / `llvm-sys` 181. |
-| Rust | rustup toolchain `1.83.0` (minimal profile) | Known-good with this workspace; recorded in the verification log. |
+| Rust | rustup toolchain `1.98.1` (minimal profile) | Current stable; required for `clap` 4.6 (`edition2024`). Still runs on glibc 2.31. Recorded in the verification log. |
 | Cargo invocation | `cargo build --release --package openvaf-driver --features llvm18 --bin openvaf-r` | Same CLI the README/`build.sh` use, pinned to LLVM 18. |
 
 The image definition is [`docker/sles15/Dockerfile`](docker/sles15/Dockerfile).
@@ -34,7 +34,7 @@ On a machine with Docker:
 
 That will:
 
-1. `docker build --network=host` the `openvaf-sles15:glibc231` image (Ubuntu 20.04 + LLVM 18.1.8 + rustc 1.83.0). Host networking is used so the build works when dockerd has no user-bridge (nested environments); it is harmless on a normal Docker host.
+1. `docker build --network=host` the `openvaf-sles15:glibc231` image (Ubuntu 20.04 + LLVM 18.1.8 + rustc 1.98.1). Host networking is used so the build works when dockerd has no user-bridge (nested environments); it is harmless on a normal Docker host.
 2. Run the compile **inside** that image (`--in-container`), so the linker sees glibc 2.31.
 3. Bundle non-glibc shared libraries (notably `libLLVM`) next to the binary with `$ORIGIN/../lib`.
 4. Write:
@@ -46,7 +46,7 @@ and a host-side Cargo registry cache at `.cargo-sles15/` (gitignored).
 
 ### Already inside Ubuntu 20.04 / Leap 15.4 / SLES 15
 
-Install the same LLVM tarball under `/opt/LLVM`, rustup 1.83.0, and:
+Install the same LLVM tarball under `/opt/LLVM`, rustup 1.98.1, and:
 
 ```bash
 export LLVM_SYS_181_PREFIX=/opt/LLVM

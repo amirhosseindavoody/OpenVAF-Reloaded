@@ -109,11 +109,10 @@ package_and_verify() {
     }
 
     # Follow ldd lines of the form: "libfoo.so.1 => /path/to/libfoo.so.1 (0x...)"
-    while read -r line; do
-        if [[ "$line" =~ =>[[:space:]]+([^[:space:]]+) ]]; then
-            copy_dep "${BASH_REMATCH[1]}"
-        fi
-    done < <(ldd "$staging/bin/openvaf-r" || true)
+    while read -r dep; do
+        [[ -n "$dep" && -e "$dep" ]] || continue
+        copy_dep "$dep"
+    done < <(ldd "$staging/bin/openvaf-r" | awk '/=>/ {print $3}')
 
     if [[ -n "$libdir" ]]; then
         # llvm-sys prefer-dynamic: ensure the soname the binary actually NEEDs is present.
@@ -253,6 +252,7 @@ $DOCKER_BIN run --rm \
     -e HOME=/tmp \
     -e CARGO_HOME=/cargo \
     -e CARGO_TARGET_DIR=/src/target-sles15 \
+    -e CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" \
     -e RUSTUP_HOME=/opt/rustup \
     -v "$ROOT":/src:rw \
     -v "$ROOT/.cargo-sles15":/cargo:rw \
