@@ -1,0 +1,50 @@
+name: SLES 15 (glibc 2.31) binary
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "docker/sles15/**"
+      - "scripts/build-sles15.sh"
+      - "scripts/verify-glibc-2.31.sh"
+      - ".github/workflows/sles15-binary.yml"
+      - "openvaf/**"
+      - "lib/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+  pull_request:
+    paths:
+      - "docker/sles15/**"
+      - "scripts/build-sles15.sh"
+      - "scripts/verify-glibc-2.31.sh"
+      - ".github/workflows/sles15-binary.yml"
+      - "openvaf/**"
+      - "lib/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+
+permissions:
+  contents: read
+
+jobs:
+  linux-x86_64-glibc231:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build openvaf-r (Ubuntu 20.04 / glibc 2.31)
+        run: ./scripts/build-sles15.sh
+
+      - name: Show verification log
+        run: cat artifacts/sles15/glibc-verification.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openvaf-r-linux-x86_64-glibc231
+          path: |
+            artifacts/sles15/*.tar.gz
+            artifacts/sles15/glibc-verification.txt
+          if-no-files-found: error

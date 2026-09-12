@@ -38,3 +38,6 @@ markus_notes
 **.swp
 **.swo
 .llvm-version
+.cargo-sles15/
+artifacts/sles15/*.tar.gz
+artifacts/sles15/openvaf-r-*/

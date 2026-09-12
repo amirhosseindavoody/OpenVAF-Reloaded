@@ -115,8 +115,17 @@ jobs:
     needs: [format, machete, purge-caches]
     steps:
     - uses: actions/checkout@v4
-      with:
-        submodules: recursive
+
+    - name: Fetch VACASK test models (optional)
+      continue-on-error: true
+      run: |
+        set +e
+        for i in 1 2 3 4 5; do
+          git submodule update --init --depth 1 external/vacask && exit 0
+          sleep $((i * 5))
+        done
+        echo "VACASK submodule unavailable; those integration tests will be skipped."
+        exit 0
 
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
@@ -226,8 +235,17 @@ jobs:
     needs: [format, machete, purge-caches]
     steps:
     - uses: actions/checkout@v4
-      with:
-        submodules: recursive
+    - name: Fetch VACASK test models (optional)
+      continue-on-error: true
+      shell: bash
+      run: |
+        set +e
+        for i in 1 2 3 4 5; do
+          git submodule update --init --depth 1 external/vacask && exit 0
+          sleep $((i * 5))
+        done
+        echo "VACASK submodule unavailable; those integration tests will be skipped."
+        exit 0
     - name: Setup MSYS2
       uses: msys2/setup-msys2@v2
       with:
@@ -311,8 +329,17 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        submodules: recursive
+
+    - name: Fetch VACASK test models (optional)
+      continue-on-error: true
+      run: |
+        set +e
+        for i in 1 2 3 4 5; do
+          git submodule update --init --depth 1 external/vacask && exit 0
+          sleep $((i * 5))
+        done
+        echo "VACASK submodule unavailable; those integration tests will be skipped."
+        exit 0
 
     - name: Install dependencies with Homebrew
       uses: tecolicom/actions-use-homebrew-tools@v1

@@ -64,6 +64,30 @@ jobs:
           name: openvaf-r-linux-x86_64
           path: "*.tar.gz"
 
+  linux-x86_64-glibc231:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      OPENVAF_SLES15_PKG: openvaf-r-${{ env.RELEASE_TAG }}-linux-x86_64-glibc231
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build openvaf-r (Ubuntu 20.04 / glibc 2.31)
+        run: ./scripts/build-sles15.sh
+
+      - name: Show verification log
+        run: cat artifacts/sles15/glibc-verification.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openvaf-r-linux-x86_64-glibc231
+          path: |
+            artifacts/sles15/*.tar.gz
+            artifacts/sles15/glibc-verification.txt
+          if-no-files-found: error
+
   windows-x86_64:
     strategy:
       fail-fast: false
@@ -200,7 +224,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    needs: [linux-x86_64, windows-x86_64, macos]
+    needs: [linux-x86_64, linux-x86_64-glibc231, windows-x86_64, macos]
     steps:
       - uses: actions/download-artifact@v4
         with:

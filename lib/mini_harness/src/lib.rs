@@ -68,7 +68,13 @@ impl<'a> Test<'a> {
     where
         'a: 'r,
     {
-        read_dir(dir).expect("reading test data must succeed").flatten().filter_map(move |entry| {
+        // Optional trees (e.g. the VACASK submodule) must not abort the suite
+        // when the directory is missing — CI often cannot clone codeberg.org.
+        let entries = match read_dir(dir) {
+            Ok(rd) => rd.flatten().collect::<Vec<_>>(),
+            Err(_) => Vec::new(),
+        };
+        entries.into_iter().filter_map(move |entry| {
             let path = entry.path();
             if !filter(&path) {
                 return None;
