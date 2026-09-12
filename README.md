@@ -235,7 +235,22 @@ To build the debug version:
 cargo build --features llvm21
 ```
 
-The release binary can be found in `target/release` while the debug binary is built in `target/debug`. 
+The release binary can be found in `target/release` while the debug binary is built in `target/debug`.
+
+### SLES 15 / glibc 2.31
+
+A release binary produced on Ubuntu 24.04 (or any host with glibc newer than 2.31)
+will not run on SLES 15. Use the Ubuntu 20.04 + official LLVM 18.1.8 recipe in
+[BUILD_SLES15.md](BUILD_SLES15.md):
+
+```bash
+./scripts/build-sles15.sh
+```
+
+That builds inside Docker (`ubuntu:20.04`, glibc 2.31), verifies that no
+`GLIBC_*` symbol newer than 2.31 is required, and writes a tarball under
+`artifacts/sles15/`. GitHub Actions uploads the same artifact from
+`.github/workflows/sles15-binary.yml`. 
 
 # Debugging OpenVAF-reloaded in Visual Studio Code 
 
