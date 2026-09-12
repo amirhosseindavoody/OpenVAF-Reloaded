@@ -238,14 +238,17 @@ DOCKER_BIN="$(docker_cmd)" || {
 }
 
 echo "Building toolchain image $IMAGE_NAME from $DOCKERFILE"
+# --network=host: required when dockerd has no user-bridge (nested CI / this agent).
+# Harmless on a normal Docker host / GitHub Actions runner.
 # shellcheck disable=SC2086
-$DOCKER_BIN build -t "$IMAGE_NAME" -f "$DOCKERFILE" "$ROOT/docker/sles15"
+$DOCKER_BIN build --network=host -t "$IMAGE_NAME" -f "$DOCKERFILE" "$ROOT/docker/sles15"
 
 mkdir -p "$TARGET_DIR" "$OUT_DIR" "$ROOT/.cargo-sles15"
 
 echo "Compiling openvaf-r inside $IMAGE_NAME"
 # shellcheck disable=SC2086
 $DOCKER_BIN run --rm \
+    --network=host \
     --user "$(id -u):$(id -g)" \
     -e HOME=/tmp \
     -e CARGO_HOME=/cargo \

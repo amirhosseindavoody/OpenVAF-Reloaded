@@ -34,7 +34,7 @@ On a machine with Docker:
 
 That will:
 
-1. `docker build` the `openvaf-sles15:glibc231` image (Ubuntu 20.04 + LLVM 18.1.8 + rustc 1.83.0).
+1. `docker build --network=host` the `openvaf-sles15:glibc231` image (Ubuntu 20.04 + LLVM 18.1.8 + rustc 1.83.0). Host networking is used so the build works when dockerd has no user-bridge (nested environments); it is harmless on a normal Docker host.
 2. Run the compile **inside** that image (`--in-container`), so the linker sees glibc 2.31.
 3. Bundle non-glibc shared libraries (notably `libLLVM`) next to the binary with `$ORIGIN/../lib`.
 4. Write:
