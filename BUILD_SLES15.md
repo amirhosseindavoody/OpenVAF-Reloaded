@@ -60,18 +60,22 @@ export PATH=/opt/LLVM/bin:$PATH
 
 The script refuses to link if `ldd --version` reports glibc **newer than 2.31**.
 
-## GitHub Actions artifact
+## GitHub Actions artifact and GitHub Release
 
-Workflow: [`.github/workflows/sles15-binary.yml`](.github/workflows/sles15-binary.yml).
+Two workflows produce this tarball:
 
-On `workflow_dispatch`, and on pushes/PRs that touch the compiler or this
-recipe, it runs `./scripts/build-sles15.sh` on `ubuntu-latest` (which provides
-Docker) and uploads:
+- [`.github/workflows/sles15-binary.yml`](.github/workflows/sles15-binary.yml)
+  — CI / `workflow_dispatch`. Uploads Actions artifact
+  `openvaf-r-linux-x86_64-glibc231` (`.tar.gz` + `glibc-verification.txt`).
+- [`.github/workflows/release.yml`](.github/workflows/release.yml) job
+  `linux-x86_64-glibc231` — on `v*` tags (or a manual Release dispatch with a
+  tag). Uses the same `./scripts/build-sles15.sh` and names the archive
+  `openvaf-r-<tag>-linux-x86_64-glibc231.tar.gz`. The `publish` job attaches it
+  to the GitHub Release next to the Ubuntu 24.04 Linux, Windows, and macOS
+  assets.
 
-- `openvaf-r-linux-x86_64-glibc231` — the `.tar.gz` plus `glibc-verification.txt`
-
-Download from the Actions run (or a GitHub Release, if a maintainer attaches
-the same tarball).
+Set `OPENVAF_SLES15_PKG` to override the archive directory/tarball name
+(Release does this from the tag).
 
 ## Install and run on SLES 15
 

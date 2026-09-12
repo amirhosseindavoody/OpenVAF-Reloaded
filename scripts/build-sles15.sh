@@ -80,7 +80,8 @@ package_and_verify() {
     mkdir -p "$OUT_DIR"
     local describe
     describe="$(git -C "$ROOT" describe --always --dirty --tags 2>/dev/null || git -C "$ROOT" rev-parse --short HEAD)"
-    local pkg="openvaf-r-${describe}-linux-x86_64-glibc231"
+    # Release workflow sets OPENVAF_SLES15_PKG=openvaf-r-<tag>-linux-x86_64-glibc231
+    local pkg="${OPENVAF_SLES15_PKG:-openvaf-r-${describe}-linux-x86_64-glibc231}"
     local staging="$OUT_DIR/$pkg"
     rm -rf "$staging"
     mkdir -p "$staging/bin" "$staging/lib"
@@ -279,6 +280,7 @@ $DOCKER_BIN run --rm \
     -e CARGO_HOME=/cargo \
     -e CARGO_TARGET_DIR=/src/target-sles15 \
     -e CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" \
+    -e OPENVAF_SLES15_PKG="${OPENVAF_SLES15_PKG:-}" \
     -e RUSTUP_HOME=/opt/rustup \
     -v "$ROOT":/src:rw \
     -v "$ROOT/.cargo-sles15":/cargo:rw \

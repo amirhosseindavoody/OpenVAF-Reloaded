@@ -249,8 +249,10 @@ will not run on SLES 15. Use the Ubuntu 20.04 + official LLVM 18.1.8 recipe in
 
 That builds inside Docker (`ubuntu:20.04`, glibc 2.31), verifies that no
 `GLIBC_*` symbol newer than 2.31 is required, and writes a tarball under
-`artifacts/sles15/`. GitHub Actions uploads the same artifact from
-`.github/workflows/sles15-binary.yml`. 
+`artifacts/sles15/`. CI uploads the same artifact from
+`.github/workflows/sles15-binary.yml`. Tagging `v*` (or dispatching the
+Release workflow) also builds it and attaches
+`openvaf-r-<tag>-linux-x86_64-glibc231.tar.gz` to the GitHub Release. 
 
 # Debugging OpenVAF-reloaded in Visual Studio Code 
 
