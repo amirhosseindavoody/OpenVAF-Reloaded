@@ -52,7 +52,10 @@ version_gt() {
 }
 
 host_glibc_version() {
-    ldd --version 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+' | head -n1
+    # awk (not head) so `set -o pipefail` does not die on SIGPIPE.
+    ldd --version 2>&1 | awk 'NR==1 {
+        if (match($0, /[0-9]+\.[0-9]+/)) print substr($0, RSTART, RLENGTH)
+    }'
 }
 
 docker_cmd() {
@@ -145,7 +148,7 @@ package_and_verify() {
         echo "date: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
         echo "git: $(git -C "$ROOT" rev-parse HEAD) ($describe)"
         echo "host: $(source /etc/os-release && echo "$PRETTY_NAME")"
-        echo "host glibc: $(ldd --version | head -n1)"
+        echo "host glibc: $(ldd --version 2>&1 | awk 'NR==1 {print; exit}')"
         echo "rustc: $(rustc --version 2>/dev/null || echo unknown)"
         echo "cargo: $(cargo --version 2>/dev/null || echo unknown)"
         if [[ -x "${LLVM_SYS_181_PREFIX:-/opt/LLVM}/bin/llvm-config" ]]; then
