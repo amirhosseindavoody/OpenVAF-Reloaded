@@ -194,6 +194,18 @@ package_and_verify() {
     echo
     echo "Wrote $OUT_DIR/${pkg}.tar.gz"
     echo "Wrote $verify_log"
+
+    # Smoke-test here so $staging is still in scope (set -u).
+    set +e
+    "$staging/bin/openvaf-r" --help >/tmp/openvaf-r-help.txt 2>&1
+    local rc=$?
+    set -e
+    echo
+    echo "--- openvaf-r --help (exit $rc) ---"
+    cat /tmp/openvaf-r-help.txt
+    if [[ $rc -ne 0 ]]; then
+        echo "WARNING: openvaf-r --help exited $rc (flags may differ; binary still linked)."
+    fi
 }
 
 build_in_container() {
@@ -235,18 +247,6 @@ build_in_container() {
     cargo build --release --package openvaf-driver --features "$LLVM_FEATURE" --bin openvaf-r
 
     package_and_verify "$TARGET_DIR/release/openvaf-r"
-
-    # Smoke-test: the binary must at least start on this glibc-2.31 host.
-    set +e
-    "$staging/bin/openvaf-r" --help >/tmp/openvaf-r-help.txt 2>&1
-    local rc=$?
-    set -e
-    echo
-    echo "--- openvaf-r --help (exit $rc) ---"
-    cat /tmp/openvaf-r-help.txt
-    if [[ $rc -ne 0 ]]; then
-        echo "WARNING: openvaf-r --help exited $rc (flags may differ; binary still linked)."
-    fi
 }
 
 if [[ "$IN_CONTAINER" -eq 1 ]]; then
