@@ -201,8 +201,19 @@ build_in_container() {
     fi
     export PATH="${LLVM_SYS_181_PREFIX}/bin:${PATH}"
     export CARGO_TARGET_DIR="$TARGET_DIR"
+    # llvm-config --system-libs emits -ltinfo; provide the unversioned soname
+    # even when libncurses-dev is missing from the image.
+    local tinfo_stub="$TARGET_DIR/link-stubs"
+    mkdir -p "$tinfo_stub"
+    if [[ ! -e "$tinfo_stub/libtinfo.so" ]]; then
+        if [[ -e /lib/x86_64-linux-gnu/libtinfo.so.5 ]]; then
+            ln -sfn /lib/x86_64-linux-gnu/libtinfo.so.5 "$tinfo_stub/libtinfo.so"
+        elif [[ -e /lib/x86_64-linux-gnu/libtinfo.so.6 ]]; then
+            ln -sfn /lib/x86_64-linux-gnu/libtinfo.so.6 "$tinfo_stub/libtinfo.so"
+        fi
+    fi
     # Keep the shipped binary relocatable next to bundled libLLVM.
-    export RUSTFLAGS="${RUSTFLAGS:-} -C link-arg=-Wl,-rpath,\$ORIGIN/../lib"
+    export RUSTFLAGS="${RUSTFLAGS:-} -C link-arg=-L${tinfo_stub} -C link-arg=-Wl,-rpath,\$ORIGIN/../lib"
 
     echo "Using LLVM at $LLVM_SYS_181_PREFIX"
     llvm-config --version

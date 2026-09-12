@@ -59,5 +59,12 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     && rustc --version \
     && cargo --version
 
+# llvm-config --system-libs includes -ltinfo. The runtime .so.5 is already
+# installed above; the unversioned linker name comes from libncurses-dev.
+# Kept as a later layer so LLVM/rust downloads stay cached.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libncurses-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /src
 CMD ["bash", "scripts/build-sles15.sh", "--in-container"]
