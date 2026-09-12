@@ -106,8 +106,20 @@ package_and_verify() {
                 return 0
                 ;;
         esac
-        if [[ -f "$src" && ! -e "$staging/lib/$base" ]]; then
-            cp -a "$src" "$staging/lib/$base"
+        if [[ -e "$src" && ! -e "$staging/lib/$base" ]]; then
+            # Follow soname symlinks so the tarball contains real .so files.
+            local real
+            real="$(readlink -f "$src")"
+            if [[ -f "$real" ]]; then
+                local realbase
+                realbase="$(basename "$real")"
+                if [[ ! -e "$staging/lib/$realbase" ]]; then
+                    cp -a "$real" "$staging/lib/$realbase"
+                fi
+                if [[ "$realbase" != "$base" ]]; then
+                    ln -sfn "$realbase" "$staging/lib/$base"
+                fi
+            fi
         fi
     }
 
@@ -171,11 +183,11 @@ package_and_verify() {
             fi
         fi
         echo
-        echo "--- readelf -V (GNU Version definitions / needs) ---"
-        readelf -V "$staging/bin/openvaf-r" || true
+        echo "--- readelf -V version needs ---"
+        readelf -V "$staging/bin/openvaf-r" | awk '/Version needs section/,0' || true
         echo
-        echo "--- objdump -T GLIBC symbols ---"
-        objdump -T "$staging/bin/openvaf-r" | grep -E 'GLIBC_' | sort -u || true
+        echo "--- objdump -T unique GLIBC versions ---"
+        objdump -T "$staging/bin/openvaf-r" | grep -oE 'GLIBC_[0-9.]+' | sort -u || true
     } | tee "$verify_log"
 
     tar -C "$OUT_DIR" -czf "$OUT_DIR/${pkg}.tar.gz" "$pkg"

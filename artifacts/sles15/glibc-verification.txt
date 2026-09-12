@@ -1,0 +1,59 @@
+openvaf-r SLES 15 / glibc 2.31 verification
+==========================================
+date: 2026-09-12T02:17:10Z
+git: 855b64284962a15f3e8aa3e752a07fd0fd39041a (rebuilt after packaging fix)
+host: Ubuntu 20.04.6 LTS
+host glibc: ldd (Ubuntu GLIBC 2.31-0ubuntu9.17) 2.31
+rustc: rustc 1.98.1 (48a229cea 2026-09-01)
+cargo: cargo 1.98.1 (797e8a9bc 2026-08-05)
+llvm-config: 18.1.8 (/opt/LLVM)
+
+file(1):
+  ELF 64-bit LSB pie executable, x86-64, dynamically linked,
+  interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0
+
+readelf -h:
+  Class: ELF64
+  Type: DYN (Position-Independent Executable file)
+  Machine: Advanced Micro Devices X86-64
+
+ldd (resolved via $ORIGIN/../lib):
+  libdl.so.2      => system
+  libpthread.so.0 => system
+  libm.so.6       => system
+  libc.so.6       => system
+  libz.so.1       => bundled
+  libtinfo.so.5   => bundled
+  libstdc++.so.6  => bundled
+  libgcc_s.so.1   => bundled
+
+objdump -T unique GLIBC versions on openvaf-r:
+  GLIBC_2.12
+  GLIBC_2.14
+  GLIBC_2.15
+  GLIBC_2.16
+  GLIBC_2.17
+  GLIBC_2.18
+  GLIBC_2.2.5
+  GLIBC_2.25
+  GLIBC_2.27
+  GLIBC_2.28
+  GLIBC_2.29
+  GLIBC_2.3
+  GLIBC_2.3.4
+  GLIBC_2.30
+  GLIBC_2.4
+  GLIBC_2.9
+
+Highest GLIBC version needed: GLIBC_2.30
+RESULT: PASS (GLIBC_2.30 <= GLIBC_2.31)
+
+Bundled library ceiling:
+  libz.so.1.2.11         GLIBC_2.14  PASS
+  libtinfo.so.5.9        GLIBC_2.16  PASS
+  libstdc++.so.6.0.28    GLIBC_2.18  PASS
+  libgcc_s.so.1          GLIBC_2.14  PASS
+
+Smoke test: openvaf-r --version and --help exited 0 on
+Ubuntu 20.04 (glibc 2.31) and on Ubuntu 24.04 (glibc 2.39) using the
+bundled rpath tree.

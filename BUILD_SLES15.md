@@ -36,7 +36,11 @@ That will:
 
 1. `docker build --network=host` the `openvaf-sles15:glibc231` image (Ubuntu 20.04 + LLVM 18.1.8 + rustc 1.98.1). Host networking is used so the build works when dockerd has no user-bridge (nested environments); it is harmless on a normal Docker host.
 2. Run the compile **inside** that image (`--in-container`), so the linker sees glibc 2.31.
-3. Bundle non-glibc shared libraries (notably `libLLVM`) next to the binary with `$ORIGIN/../lib`.
+3. Bundle non-glibc shared libraries next to the binary with `$ORIGIN/../lib`.
+   LLVM 18.1.8 from the official tarball is **statically** linked (the tarball
+   ships `.a` archives; `ldd` does not show `libLLVM`). The remaining runtime
+   deps that SLES 15 may not have (`libtinfo.so.5`, plus `libstdc++` /
+   `libgcc_s` / `libz` for a self-contained tree) are copied as real files.
 4. Write:
    - `artifacts/sles15/openvaf-r-<git-describe>-linux-x86_64-glibc231.tar.gz`
    - `artifacts/sles15/glibc-verification.txt`
@@ -83,8 +87,10 @@ The wrapper rpath is `$ORIGIN/../lib`, so you do **not** need SLES LLVM
 packages and you should not need `LD_LIBRARY_PATH`. Keep `bin/` and `lib/`
 together.
 
-`libLLVM` is bundled because `mir_llvm` enables `llvm-sys`'s `prefer-dynamic`
-feature. System `libc` / `libm` / `libpthread` come from SLES 15 itself.
+System `libc` / `libm` / `libpthread` / `libdl` come from SLES 15 itself.
+LLVM is linked in statically from the Ubuntu 18.04 official tarball. The
+tarball still ships `libtinfo.so.5` (ncurses 5 ABI; SLES 15 is often ncurses 6
+only) and Ubuntu 20.04 `libstdc++.so.6.0.28` so the tree is self-contained.
 
 ## Verification
 
@@ -106,18 +112,81 @@ build, into the Cursor artifacts folder).
 
 ### Latest recorded verification
 
-Filled in after the first successful image build on this branch. Until then
-treat CI's `glibc-verification.txt` artifact as the source of truth — do not
-assume a binary is 2.31-safe without that log.
+Built 2026-09-12 inside `ubuntu:20.04` (glibc 2.31) with LLVM 18.1.8 and
+rustc 1.98.1. Binary `file(1)`:
 
 ```
-(pending first successful build — this section is updated in a follow-up commit)
+ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked,
+interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, with debug_info
 ```
+
+(`file` may say "shared object" for a PIE; `readelf -h` reports
+`Type: DYN (Position-Independent Executable file)`, `Machine: Advanced Micro
+Devices X86-64`.)
+
+Unique `GLIBC_*` versions needed by `openvaf-r` (from `objdump -T`):
+
+```
+GLIBC_2.12
+GLIBC_2.14
+GLIBC_2.15
+GLIBC_2.16
+GLIBC_2.17
+GLIBC_2.18
+GLIBC_2.2.5
+GLIBC_2.25
+GLIBC_2.27
+GLIBC_2.28
+GLIBC_2.29
+GLIBC_2.3
+GLIBC_2.3.4
+GLIBC_2.30
+GLIBC_2.4
+GLIBC_2.9
+```
+
+**Highest: `GLIBC_2.30` (≤ 2.31). PASS.**
+
+`readelf -V` version-needs for `libc.so.6` (excerpt):
+
+```
+File: libc.so.6
+  GLIBC_2.2.5
+  GLIBC_2.3
+  GLIBC_2.3.4
+  GLIBC_2.4
+  GLIBC_2.9
+  GLIBC_2.14
+  GLIBC_2.15
+  GLIBC_2.16
+  GLIBC_2.17
+  GLIBC_2.18
+  GLIBC_2.25
+  GLIBC_2.28
+  GLIBC_2.29
+  GLIBC_2.30
+```
+
+Bundled libraries (all PASS, max needed shown):
+
+| library | max GLIBC |
+| --- | --- |
+| `libz.so.1.2.11` | 2.14 |
+| `libtinfo.so.5.9` | 2.16 |
+| `libstdc++.so.6.0.28` | 2.18 |
+| `libgcc_s.so.1` | 2.14 |
+
+`openvaf-r --help` and `--version` were run successfully both inside the
+Ubuntu 20.04 (glibc 2.31) container and on a glibc 2.39 host using the
+bundled `$ORIGIN/../lib` tree.
+
+The machine-readable copy of this log is
+[`artifacts/sles15/glibc-verification.txt`](artifacts/sles15/glibc-verification.txt).
 
 ## What this does *not* do
 
 - It does not change the default `release.yml` Linux job, which still builds
   on Ubuntu 24.04 (glibc 2.39) for users who do not need SLES 15.
 - It does not vendor the ~1 GiB LLVM tarball in git.
-- It does not statically link LLVM (link RAM/time; `prefer-dynamic` is
-  upstream's default for `mir_llvm`).
+- It does not require a SLES LLVM RPM. The official LLVM 18.1.8 static
+  archives are linked into `openvaf-r`.
