@@ -67,12 +67,15 @@ jobs:
   linux-x86_64-glibc231:
     runs-on: ubuntu-latest
     timeout-minutes: 360
-    env:
-      OPENVAF_SLES15_PKG: openvaf-r-${{ env.RELEASE_TAG }}-linux-x86_64-glibc231
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # GitHub Actions forbids ${{ env.* }} when setting an env mapping, so
+      # derive the package name from the workflow-level RELEASE_TAG here.
+      - name: Set SLES 15 package name
+        run: echo "OPENVAF_SLES15_PKG=openvaf-r-${RELEASE_TAG}-linux-x86_64-glibc231" >> "$GITHUB_ENV"
 
       - name: Build openvaf-r (Ubuntu 20.04 / glibc 2.31)
         run: ./scripts/build-sles15.sh
