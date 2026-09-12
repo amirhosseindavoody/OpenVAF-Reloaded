@@ -238,7 +238,7 @@ build_in_container() {
 
     # Smoke-test: the binary must at least start on this glibc-2.31 host.
     set +e
-    "$OUT_DIR"/openvaf-r-*/bin/openvaf-r --help >/tmp/openvaf-r-help.txt 2>&1
+    "$staging/bin/openvaf-r" --help >/tmp/openvaf-r-help.txt 2>&1
     local rc=$?
     set -e
     echo
