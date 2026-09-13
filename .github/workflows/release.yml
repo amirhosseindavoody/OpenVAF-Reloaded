@@ -91,6 +91,33 @@ jobs:
             artifacts/sles15/glibc-verification.txt
           if-no-files-found: error
 
+  linux-x86_64-musl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # GitHub Actions forbids ${{ env.* }} when setting an env mapping, so
+      # derive the package name from the workflow-level RELEASE_TAG here.
+      - name: Set musl package name
+        run: echo "OPENVAF_MUSL_PKG=openvaf-r-${RELEASE_TAG}-linux-x86_64-musl" >> "$GITHUB_ENV"
+
+      - name: Build openvaf-r (Alpine / musl)
+        run: ./scripts/build-musl.sh
+
+      - name: Show verification log
+        run: cat artifacts/musl/musl-verification.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openvaf-r-linux-x86_64-musl
+          path: |
+            artifacts/musl/*.tar.gz
+            artifacts/musl/musl-verification.txt
+          if-no-files-found: error
+
   windows-x86_64:
     strategy:
       fail-fast: false
@@ -227,7 +254,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    needs: [linux-x86_64, linux-x86_64-glibc231, windows-x86_64, macos]
+    needs: [linux-x86_64, linux-x86_64-glibc231, linux-x86_64-musl, windows-x86_64, macos]
     steps:
       - uses: actions/download-artifact@v4
         with:

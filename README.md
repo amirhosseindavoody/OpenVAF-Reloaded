@@ -237,7 +237,15 @@ cargo build --features llvm21
 
 The release binary can be found in `target/release` while the debug binary is built in `target/debug`.
 
-### SLES 15 / glibc 2.31
+### Linux release binaries: glibc vs glibc 2.31 vs musl
+
+Release ships three Linux x86_64 artifacts. Pick one:
+
+| Artifact | Recipe | Use when |
+| --- | --- | --- |
+| `openvaf-r-<tag>-linux-x86_64.tar.gz` | Ubuntu 24.04 glibc (default Release job) | Modern glibc distros (Ubuntu 24.04+, recent Fedora/Debian). |
+| `openvaf-r-<tag>-linux-x86_64-glibc231.tar.gz` | [BUILD_SLES15.md](BUILD_SLES15.md) | SLES 15 or any host whose glibc is 2.31–2.38. The default binary needs newer `GLIBC_*` symbols. |
+| `openvaf-r-<tag>-linux-x86_64-musl.tar.gz` | [BUILD_MUSL.md](BUILD_MUSL.md) | You want **no glibc version dependency** (fully static musl, or musl-only). Best “runs on old/odd Linux” option. |
 
 A release binary produced on Ubuntu 24.04 (or any host with glibc newer than 2.31)
 will not run on SLES 15. Use the Ubuntu 20.04 + official LLVM 18.1.8 recipe in
@@ -252,7 +260,20 @@ That builds inside Docker (`ubuntu:20.04`, glibc 2.31), verifies that no
 `artifacts/sles15/`. CI uploads the same artifact from
 `.github/workflows/sles15-binary.yml`. Tagging `v*` (or dispatching the
 Release workflow) also builds it and attaches
-`openvaf-r-<tag>-linux-x86_64-glibc231.tar.gz` to the GitHub Release. 
+`openvaf-r-<tag>-linux-x86_64-glibc231.tar.gz` to the GitHub Release.
+
+For a musl / preferably-static binary (no glibc at all):
+
+```bash
+./scripts/build-musl.sh
+```
+
+That builds inside Docker (`alpine:3.21`, musl + Alpine LLVM 18.1.8 static
+archives), verifies there are no `GLIBC_*` needs, and writes a tarball under
+`artifacts/musl/`. See [BUILD_MUSL.md](BUILD_MUSL.md). CI uploads the same
+artifact from `.github/workflows/musl-binary.yml` when the musl recipe
+changes. Tagging `v*` (or dispatching Release) attaches
+`openvaf-r-<tag>-linux-x86_64-musl.tar.gz` to the GitHub Release. 
 
 # Debugging OpenVAF-reloaded in Visual Studio Code 
 

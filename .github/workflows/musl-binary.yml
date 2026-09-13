@@ -1,0 +1,42 @@
+name: Linux musl (x86_64) binary
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "docker/musl/**"
+      - "scripts/build-musl.sh"
+      - "scripts/verify-musl.sh"
+      - ".github/workflows/musl-binary.yml"
+  pull_request:
+    paths:
+      - "docker/musl/**"
+      - "scripts/build-musl.sh"
+      - "scripts/verify-musl.sh"
+      - ".github/workflows/musl-binary.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  linux-x86_64-musl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build openvaf-r (Alpine / musl)
+        run: ./scripts/build-musl.sh
+
+      - name: Show verification log
+        run: cat artifacts/musl/musl-verification.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openvaf-r-linux-x86_64-musl
+          path: |
+            artifacts/musl/*.tar.gz
+            artifacts/musl/musl-verification.txt
+          if-no-files-found: error
