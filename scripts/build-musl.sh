@@ -100,7 +100,9 @@ package_and_verify() {
                 local realbase
                 realbase="$(basename "$real")"
                 if [[ ! -e "$staging/lib/$realbase" ]]; then
-                    cp -a "$real" "$staging/lib/$realbase"
+                    # --no-preserve=ownership: container user is not root.
+                    cp -L --no-preserve=ownership "$real" "$staging/lib/$realbase" 2>/dev/null \
+                        || cp -L "$real" "$staging/lib/$realbase"
                 fi
                 if [[ "$realbase" != "$base" ]]; then
                     ln -sfn "$realbase" "$staging/lib/$base"
@@ -136,10 +138,12 @@ package_and_verify() {
         fi
 
         if command -v patchelf >/dev/null 2>&1; then
-            patchelf --set-rpath '$ORIGIN/../lib' "$staging/bin/openvaf-r"
-            if [[ -n "$musl_ld" && -e "$staging/lib/$(basename "$musl_ld")" ]]; then
-                patchelf --set-interpreter '$ORIGIN/../lib/'"$(basename "$musl_ld")" \
-                    "$staging/bin/openvaf-r" || true
+            patchelf --set-rpath '$ORIGIN/../lib' "$staging/bin/openvaf-r" || true
+            if readelf -l "$staging/bin/openvaf-r" | grep -q 'Requesting program interpreter'; then
+                if [[ -n "$musl_ld" && -e "$staging/lib/$(basename "$musl_ld")" ]]; then
+                    patchelf --set-interpreter '$ORIGIN/../lib/'"$(basename "$musl_ld")" \
+                        "$staging/bin/openvaf-r" || true
+                fi
             fi
             for so in "$staging/lib"/*; do
                 [[ -f "$so" && ! -L "$so" ]] || continue
@@ -271,9 +275,11 @@ build_in_container() {
     # link-self-contained=no uses Alpine's libc.a so it matches Alpine
     # libstdc++ / LLVM / libunwind.
     # libxml2.a typically needs lzma even when llvm-config does not list it.
+    # Pass the .a path (not -llzma) so rustc's trailing -Bdynamic cannot
+    # turn it into a NEEDED liblzma.so.
     local rustflags_common="-C link-arg=-L${stub_dir} -C link-arg=-L${gcc_libdir}"
     if [[ -e /usr/lib/liblzma.a ]]; then
-        rustflags_common+=" -C link-arg=-llzma"
+        rustflags_common+=" -C link-arg=/usr/lib/liblzma.a"
     fi
     if [[ "${OPENVAF_MUSL_STATIC:-1}" != "0" ]]; then
         export RUSTFLAGS="${RUSTFLAGS:-} -C target-feature=+crt-static -C link-self-contained=no ${rustflags_common}"
