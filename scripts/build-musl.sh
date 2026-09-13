@@ -243,22 +243,25 @@ build_in_container() {
     gcc_libdir="$(dirname "$(g++ -print-file-name=libstdc++.a)")"
     local stub_dir="$TARGET_DIR/link-stubs"
     mkdir -p "$stub_dir"
-    # musl folds librt/libdl/libpthread into libc. llvm-config --system-libs
-    # still emits -lrt -ldl -lpthread; provide empty archives if needed.
-    for stub in rt dl pthread util; do
-        if [[ ! -e "$stub_dir/lib${stub}.a" ]]; then
-            if [[ -e "/usr/lib/lib${stub}.a" ]]; then
-                ln -sfn "/usr/lib/lib${stub}.a" "$stub_dir/lib${stub}.a"
-            elif [[ -e "/usr/lib/libc.a" ]]; then
-                ln -sfn /usr/lib/libc.a "$stub_dir/lib${stub}.a"
-            fi
+    # musl folds librt/libdl/libpthread/libm into libc. llvm-config
+    # --system-libs still emits -lrt -ldl -lm. Provide empty archives
+    # (not libc.a aliases — those can double-link).
+    for stub in rt dl pthread util m; do
+        if [[ ! -e "/usr/lib/lib${stub}.a" && ! -e "$stub_dir/lib${stub}.a" ]]; then
+            printf '!<arch>\n' > "$stub_dir/lib${stub}.a"
+        elif [[ -e "/usr/lib/lib${stub}.a" && ! -e "$stub_dir/lib${stub}.a" ]]; then
+            ln -sfn "/usr/lib/lib${stub}.a" "$stub_dir/lib${stub}.a"
         fi
     done
 
     # Prefer a fully static link. crt-static + -static tells rustc/ld to
     # not emit a PT_INTERP. link-self-contained=no uses Alpine's musl
     # libc.a so it matches Alpine's libstdc++ / LLVM objects.
+    # libxml2.a typically needs lzma even when llvm-config does not list it.
     local rustflags_common="-C link-arg=-L${stub_dir} -C link-arg=-L${gcc_libdir}"
+    if [[ -e /usr/lib/liblzma.a ]]; then
+        rustflags_common+=" -C link-arg=-llzma"
+    fi
     if [[ "${OPENVAF_MUSL_STATIC:-1}" != "0" ]]; then
         export RUSTFLAGS="${RUSTFLAGS:-} -C target-feature=+crt-static -C link-self-contained=no -C link-arg=-static ${rustflags_common}"
     else

@@ -37,7 +37,6 @@ RUN printf '%s\n' \
         file \
         git \
         libffi-dev \
-        libffi-static \
         libxml2-dev \
         libxml2-static \
         linux-headers \
