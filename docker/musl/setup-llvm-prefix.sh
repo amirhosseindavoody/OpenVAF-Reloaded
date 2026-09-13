@@ -64,6 +64,14 @@ for clangxx in /usr/bin/clang++-18 /usr/lib/llvm18/bin/clang++ /usr/bin/clang++;
         break
     fi
 done
+# openvaf/target/build.rs invokes llvm-lib (MSVC-style llvm-ar).
+for ar in /usr/lib/llvm18/bin/llvm-ar /usr/bin/llvm-ar-18 /usr/bin/llvm-ar; do
+    if [ -x "$ar" ]; then
+        ln -sfn "$ar" "$PREFIX/bin/llvm-ar"
+        ln -sfn "$ar" "$PREFIX/bin/llvm-lib"
+        break
+    fi
+done
 
 link_archive() {
     src="$1"

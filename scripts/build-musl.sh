@@ -235,8 +235,18 @@ build_in_container() {
     fi
     export PATH="${LLVM_SYS_181_PREFIX}/bin:${PATH}"
     export CARGO_TARGET_DIR="$TARGET_DIR"
-    export CC="${CC:-gcc}"
-    export CXX="${CXX:-g++}"
+    # openvaf/target/build.rs compiles ucrt stubs with clang --target=...
+    # and then calls llvm-lib. gcc does not accept --target=.
+    export CC="${CC:-clang}"
+    export CXX="${CXX:-clang++}"
+    if ! command -v llvm-lib >/dev/null 2>&1; then
+        local ar
+        ar="$(command -v llvm-ar-18 || command -v llvm-ar || true)"
+        if [[ -n "$ar" ]]; then
+            mkdir -p "${LLVM_SYS_181_PREFIX}/bin"
+            ln -sfn "$ar" "${LLVM_SYS_181_PREFIX}/bin/llvm-lib"
+        fi
+    fi
 
     # libstdc++.a lives in gcc's private libdir, not /usr/lib.
     local gcc_libdir
