@@ -155,11 +155,32 @@ artifact). Commit that file only after a real run — do not invent
 
 ### Latest recorded verification
 
-After the first successful Docker or Actions run, the log is committed
-as [`artifacts/musl/musl-verification.txt`](artifacts/musl/musl-verification.txt)
-when available. Until a real binary exists, that path is produced only
-by the build script (it is gitignored as part of the tarball tree, not
-as the log itself).
+Built 2026-09-13 inside `alpine:3.21` (musl) with Alpine LLVM 18.1.8
+static archives and rustc 1.98.1. Binary `file(1)`:
+
+```
+ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), static-pie linked
+```
+
+(`readelf -h` reports `Type: DYN (Position-Independent Executable file)`,
+`Machine: Advanced Micro Devices X86-64`. There is **no**
+`PT_INTERP` and **no** `NEEDED` entry.)
+
+`objdump -T` / `readelf -V`: **no `GLIBC_*` versions**.
+
+Alpine `ldd` still prints `/lib/ld-musl-x86_64.so.1` for a static-pie
+(known musl ldd quirk). On Ubuntu 24.04 (glibc 2.39) the same binary
+reports:
+
+```
+ldd: statically linked
+```
+
+and `openvaf-r --help` / `--version` both exit 0, including under
+`env -i PATH=/usr/bin`. No bundled `lib/` directory.
+
+The machine-readable copy of this log is
+[`artifacts/musl/musl-verification.txt`](artifacts/musl/musl-verification.txt).
 
 ## What this does *not* do
 
