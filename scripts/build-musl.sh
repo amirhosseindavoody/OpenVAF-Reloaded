@@ -264,16 +264,19 @@ build_in_container() {
         fi
     done
 
-    # Prefer a fully static link. crt-static + -static tells rustc/ld to
-    # not emit a PT_INTERP. link-self-contained=no uses Alpine's musl
-    # libc.a so it matches Alpine's libstdc++ / LLVM objects.
+    # Prefer a fully static link. +crt-static on x86_64-unknown-linux-musl
+    # makes rustc emit -static-pie (no PT_INTERP). Do NOT also pass
+    # -C link-arg=-static: that pulls gcc's non-PIE crtbeginT.o and the
+    # link dies with R_X86_64_32 against __TMC_END__.
+    # link-self-contained=no uses Alpine's libc.a so it matches Alpine
+    # libstdc++ / LLVM / libunwind.
     # libxml2.a typically needs lzma even when llvm-config does not list it.
     local rustflags_common="-C link-arg=-L${stub_dir} -C link-arg=-L${gcc_libdir}"
     if [[ -e /usr/lib/liblzma.a ]]; then
         rustflags_common+=" -C link-arg=-llzma"
     fi
     if [[ "${OPENVAF_MUSL_STATIC:-1}" != "0" ]]; then
-        export RUSTFLAGS="${RUSTFLAGS:-} -C target-feature=+crt-static -C link-self-contained=no -C link-arg=-static ${rustflags_common}"
+        export RUSTFLAGS="${RUSTFLAGS:-} -C target-feature=+crt-static -C link-self-contained=no ${rustflags_common}"
     else
         export RUSTFLAGS="${RUSTFLAGS:-} ${rustflags_common} -C link-arg=-Wl,-rpath,\$ORIGIN/../lib"
     fi
