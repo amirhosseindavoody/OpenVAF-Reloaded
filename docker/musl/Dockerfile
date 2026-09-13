@@ -39,6 +39,8 @@ RUN printf '%s\n' \
         libffi-dev \
         libxml2-dev \
         libxml2-static \
+        libunwind-dev \
+        libunwind-static \
         linux-headers \
         llvm18-dev \
         llvm18-static \
