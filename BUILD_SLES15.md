@@ -191,6 +191,8 @@ The machine-readable copy of this log is
 
 - It does not change the default `release.yml` Linux job, which still builds
   on Ubuntu 24.04 (glibc 2.39) for users who do not need SLES 15.
+- It does not replace the musl / static Linux artifact. For a binary with
+  **no glibc dependency at all**, see [BUILD_MUSL.md](BUILD_MUSL.md).
 - It does not vendor the ~1 GiB LLVM tarball in git.
 - It does not require a SLES LLVM RPM. The official LLVM 18.1.8 static
   archives are linked into `openvaf-r`.

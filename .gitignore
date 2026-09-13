@@ -39,5 +39,9 @@ markus_notes
 **.swo
 .llvm-version
 .cargo-sles15/
+.cargo-musl/
 artifacts/sles15/*.tar.gz
 artifacts/sles15/openvaf-r-*/
+artifacts/musl/*.tar.gz
+artifacts/musl/openvaf-r-*/
+# Keep musl-verification.txt when a real build records it.
